@@ -71,7 +71,7 @@ Filter to rows where `Status = pending`. Update `Status` to `processed` after ea
 
 ---
 
-### Step 2 — detect Article Type
+### Step 2 — Detect Article Type
 
 Fetch each target URL and classify based on title keywords and page structure:
 
@@ -331,128 +331,51 @@ Happy to set up a free trial if you're considering adding a new category.
 **Resource Page:**
 > Hi [Name], found your [page title] while researching [topic]. [Your Product] might be worth adding — [one-sentence relevance]. Let me know if you'd like to take a look. — [Your Name], [Title]
 
+### Step 6 — Review, Send, and Close the Loop
+
+This is where drafts become a fully automated pipeline. Step 6 has three parts: review, send, and loop.
+
 ---
 
-### Step 6 — Output Structured Report
+#### Part 1: Review the report
 
-Output all processed entries in a table, saved to Google Doc or shown in conversation:
+Output all processed entries in a table:
 
 | # | Target URL | Article Type | Email | Source | Confidence | Subject | Body | Status |
 |---|-----------|--------------|-------|--------|------------|---------|------|--------|
 | 1 | [url] | Best/Top | john@x.com | Contact page | High | [subject] | [body] | processed |
 | 2 | [url] | How-to | not found | — | Not Found | [subject] | [body] | processed |
 
-**Confidence-based send actions:**
+User reviews each row. Confidence-based actions before sending:
 
 | Confidence | Action |
 |------------|--------|
-| **High** | Send immediately |
+| **High** | Ready to send |
 | **Medium** | Quick verify on Hunter.io, then send |
 | **Low** | Must verify on Hunter.io before sending |
-| **Not Found** | Switch to Twitter DM or LinkedIn message |
+| **Not Found** | Switch to Twitter DM or LinkedIn message — remove from send queue |
+
+> **Always review emails before sending.** This Skill generates drafts — you approve. Speed is the AI's job. Quality is yours.
 
 ---
 
-## Commands (Natural Language)
+#### Part 2: Gmail setup + bulk send
 
-| Say This | Action |
-|----------|--------|
-| "Setup outreach" | Start one-time setup wizard |
-| "Run outreach" | Process all pending rows |
-| "Run outreach on [URL]" | Process single opportunity |
-| "Regenerate email for [URL]" | Rewrite that entry's email |
-| "Update product info" | Re-fetch and re-analyze product page |
-| "Show pending" | List unprocessed opportunities |
+Once the user confirms the report, immediately ask:
 
----
+> "Ready to send. Which Gmail auth method do you want to use?
+> - **App Password** — personal accounts, setup in 5 minutes
+> - **OAuth2** — Google Workspace or shared team accounts"
 
-## Sending Volume Guidelines
+Based on their choice, refer to the **Gmail Auth Setup** section and guide them through configuration. Then generate a send script on the spot that includes:
 
-Do not attempt to send at scale immediately. Domain reputation is a long-term asset — spam flags are difficult to recover from.
+- Personalized variable substitution from Step 5
+- Staggered sending (default 30s delay, adjustable)
+- Daily send cap (see **Sending Volume Guidelines**)
+- Send log written to `sent_log.json` — records Message-ID per email for thread matching
+- Skips already-sent contacts to prevent duplicates
 
-| Phase | Volume | Goal |
-|-------|--------|------|
-| Week 1 | 5–10/day | Test which angles and article types get the best reply rates |
-| Week 2 | 10–20/day | Scale the approaches that are working |
-| Week 3+ | Adjust based on reply rate | Continuous optimization |
-
-> **Always manually review emails before sending.** This Skill generates drafts — you approve and send. Speed is the AI's job. Quality is yours.
-
----
-
-## Compliance
-
-Ensure all outreach complies with:
-- **CAN-SPAM** (US) — Include physical address, opt-out option in every email
-- **GDPR** (EU) — Only contact business emails; include a simple opt-out path
-- **No bulk automated sending** — Review manually and send via your own ESP
-
----
-
-## Troubleshooting
-
-| Problem | Fix |
-|---------|-----|
-| Can't find contact email | All 5 channels tried — switch to Twitter DM or LinkedIn message |
-| Email feels generic | Step 4 analysis wasn't deep enough — re-fetch article and extract a more specific reference |
-| Wrong article type detected | Manually fill `Article Type` column — Skill always respects manually set values |
-| Low confidence on all emails | Use Hunter.io to verify before sending — do not send to unverified Low confidence emails |
-| Google Sheets not connecting | Paste the spreadsheet content directly into the conversation |
-| Product info feels outdated | Say "Update product info" to re-fetch and re-analyze the product page |
-| Email too long | Enforce the 150-word limit — cut context, keep the reference, gap, and ask |
-
----
-
-## Closed-Loop: Gmail Send + Fetch Replies + AI Analysis
-
-> Once Step 6 drafts are approved, enter the three closed-loop stages to automate everything from sending to follow-up.
-
-### Full Loop Overview
-
-```
-[Drafts approved] → [Stage A] Gmail bulk send
-                          ↓
-                    [Stage B] Fetch replies / match threads
-                          ↓
-                    [Stage C] AI classify → summary report + follow-up task list
-                          ↓
-                    [Stage D] Auto-send follow-up emails based on classification
-                          ↓
-                    [repeat B → C → D until every contact reaches a final state]
-```
-
-**Final states** (no further action needed):
-- ✅ Positive — handed off for manual action (send trial, pitch topics, etc.)
-- ❌ Rejected — closed
-- 🚫 Max follow-ups reached — closed (default: 2 follow-up attempts)
-
----
-
-### Stage A: Gmail Auth + Bulk Send
-
-#### Step A1: Confirm auth method
-
-Ask the user:
-
-> "Which Gmail auth method do you want to use?
-> - **App Password** — recommended for personal accounts, setup in 5 minutes
-> - **OAuth2** — recommended for Google Workspace or shared team accounts"
-
-Based on their choice, refer to the **Gmail Auth Setup** section below and guide them through configuration.
-
-#### Step A2: Generate send script
-
-Based on the user's auth method and contact data, generate a Python send script on the spot. The script must include:
-
-- Variable substitution matching the personalized content from Step 5
-- Staggered sending (default 30s delay between emails, adjustable)
-- Daily send cap (follow the volume guidelines in **Sending Volume Guidelines**)
-- Send log written to `sent_log.json` — saves Message-ID per email for thread matching in Stage B
-- Skip already-sent contacts to prevent duplicates
-
-#### Step A3: Install dependencies and run
-
-Generate the install and run commands based on auth method:
+Generate install and run commands:
 
 ```bash
 # App Password
@@ -464,34 +387,33 @@ pip install google-auth-oauthlib google-auth-httplib2 google-api-python-client p
 python send_emails.py
 ```
 
+The loop starts the moment emails are sent.
+
 ---
 
-### Stage B: Fetch Replies + Match Threads
+#### Part 3: Closed loop — fetch, analyze, follow up
 
-#### When to trigger
+```
+[Emails sent] → fetch replies → AI classify → auto follow-up
+                      ↑_____________↓
+               repeat until every contact reaches a final state
+```
 
-When the user says "check for replies", "who replied", or "fetch inbox" — enter this stage.
+**Final states** (loop stops):
+- ✅ Positive — flagged for manual action (send trial, pitch topics, etc.)
+- ❌ Rejected — closed
+- 🚫 Max follow-ups reached — closed (default: 2 attempts)
 
-#### Generate fetch script
+**Fetching replies** — trigger with "check for replies" or "who replied":
 
-Generate a Python script based on the user's auth method. The script must include:
-
-**Thread matching (in priority order):**
-1. Message-ID match — most accurate, uses IDs stored in `sent_log.json`
+Generate a fetch script that matches replies using (in priority order):
+1. Message-ID — most accurate, from `sent_log.json`
 2. Sender email match
 3. Sender domain match
 
-**Filtering rules:**
-- Auto-detect and flag Out-of-Office / no-reply auto-responses
-- Skip emails sent by the user themselves
+Filtering: auto-detect OOO / no-reply responses; skip self-sent emails. Output: `replies.json`. Contacts with no reply are marked `no_reply`.
 
-**Output:** `replies.json` containing sender, reply body, matched original contact, and auto-reply flag. Contacts in `sent_log.json` with no matching reply are marked `no_reply`.
-
----
-
-### Stage C: AI Analysis + Report
-
-Generate a script that calls the Claude API to classify each reply:
+**AI classification** — trigger with "analyze replies":
 
 | Status | Signal |
 |--------|--------|
@@ -501,58 +423,21 @@ Generate a script that calls the Claude API to classify each reply:
 | 📭 No reply | No response after specified number of days |
 | 🤖 Auto-reply | OOO or system-generated message |
 
-**Three outputs:**
+Three outputs: ① summary table with next action per contact ② grouped status counts ③ follow-up task list with dates and priority flags.
 
-**① Summary table**
-
-```markdown
-| Contact | Site | Article Type | Status | Reply Summary | Next Action |
-|---------|------|--------------|--------|---------------|-------------|
-| John Smith | example.com | Best/Top | ✅ Positive | Interested, wants free trial | Send trial link today |
-| Jane Doe | blog.io | How-to | 📭 No reply | — | Follow up in 7 days |
-```
-
-**② Grouped status summary**
-
-```
-✅ Positive (3)   🔄 Follow up (2)   📭 No reply (15)   ❌ Rejected (1)
-```
-
-**③ Follow-up task list**
-
-```markdown
-- [ ] 🔴 [Today] Send free trial link to John Smith (example.com)
-- [ ] 🟡 [+3 days] First follow-up to Jane Doe (blog.io)
-- [ ] ⚪ [+7 days] Bulk follow-up to 15 non-responders
-```
-
----
-
-### Stage D: Auto Follow-Up
-
-This stage closes the loop. Based on the classifications from Stage C, generate and send follow-up emails automatically — no manual copy-pasting required.
-
-#### Follow-up rules
+**Auto follow-up** — trigger with "send follow-ups":
 
 | Classification | Action | Timing |
 |----------------|--------|--------|
 | ✅ Positive | Do NOT auto follow-up — flag for manual action | Immediate |
-| 🔄 Follow up | Send a short "checking in" follow-up | +3 days after reply |
+| 🔄 Follow up | Send short "checking in" | +3 days after reply |
 | 📭 No reply (first) | Send follow-up #1 | +7 days after original send |
-| 📭 No reply (second) | Send follow-up #2 (final) | +7 days after follow-up #1 |
-| 📭 No reply (third+) | Mark as closed — do not contact again | — |
-| ❌ Rejected | Do not follow up — mark as closed | — |
+| 📭 No reply (second) | Send follow-up #2 (final) | +7 days after #1 |
+| 📭 No reply (third+) | Mark closed — do not contact again | — |
+| ❌ Rejected | Mark closed — do not contact again | — |
 | 🤖 Auto-reply | Re-queue as no-reply, follow up after OOO window | +5 days |
 
-#### Generate follow-up script
-
-Based on the `analysis_results.json` from Stage C, generate a script that:
-
-- Reads each contact's current classification and `follow_up_count`
-- Skips contacts that are positive, rejected, or have reached max follow-ups (default: 2)
-- Generates a short, contextually appropriate follow-up email using the original email's subject line with `Re:` prefix to stay in the same thread
-- Sends via the same Gmail auth method used in Stage A
-- Updates `sent_log.json` with the new follow-up record and increments `follow_up_count`
+---
 
 #### Follow-up email rules
 
@@ -600,20 +485,7 @@ After Stage D runs, every contact has a tracked state in `sent_log.json`:
 }
 ```
 
-Loop continues (B → C → D) until `final_state: true` for every contact.
-
----
-
-## Closed-Loop Commands
-
-| Say This | Action |
-|----------|--------|
-| "Send outreach emails" | Enter Stage A — configure Gmail and send |
-| "Check replies" | Enter Stage B — fetch and match replies |
-| "Analyze replies" | Enter Stage C — generate AI analysis report |
-| "Send follow-ups" | Enter Stage D — auto-send follow-ups based on analysis |
-| "Full loop" | Run Stage A → B → C → D in sequence |
-| "Run loop again" | Re-run Stage B → C → D on existing contacts |
+Loop continues until `final_state: true` for every contact.
 
 ---
 
