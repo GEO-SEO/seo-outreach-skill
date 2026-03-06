@@ -401,3 +401,337 @@ Ensure all outreach complies with:
 | Google Sheets not connecting | Paste the spreadsheet content directly into the conversation |
 | Product info feels outdated | Say "Update product info" to re-fetch and re-analyze the product page |
 | Email too long | Enforce the 150-word limit — cut context, keep the reference, gap, and ask |
+
+---
+
+## Closed-Loop: Gmail Send + Fetch Replies + AI Analysis
+
+> Once Step 6 drafts are approved, enter the three closed-loop stages to automate everything from sending to follow-up.
+
+### Full Loop Overview
+
+```
+[Drafts approved] → [Stage A] Gmail bulk send
+                          ↓
+                    [Stage B] Fetch replies / match threads
+                          ↓
+                    [Stage C] AI classify → summary report + follow-up task list
+                          ↓
+                    [Stage D] Auto-send follow-up emails based on classification
+                          ↓
+                    [repeat B → C → D until every contact reaches a final state]
+```
+
+**Final states** (no further action needed):
+- ✅ Positive — handed off for manual action (send trial, pitch topics, etc.)
+- ❌ Rejected — closed
+- 🚫 Max follow-ups reached — closed (default: 2 follow-up attempts)
+
+---
+
+### Stage A: Gmail Auth + Bulk Send
+
+#### Step A1: Confirm auth method
+
+Ask the user:
+
+> "Which Gmail auth method do you want to use?
+> - **App Password** — recommended for personal accounts, setup in 5 minutes
+> - **OAuth2** — recommended for Google Workspace or shared team accounts"
+
+Based on their choice, refer to the **Gmail Auth Setup** section below and guide them through configuration.
+
+#### Step A2: Generate send script
+
+Based on the user's auth method and contact data, generate a Python send script on the spot. The script must include:
+
+- Variable substitution matching the personalized content from Step 5
+- Staggered sending (default 30s delay between emails, adjustable)
+- Daily send cap (follow the volume guidelines in **Sending Volume Guidelines**)
+- Send log written to `sent_log.json` — saves Message-ID per email for thread matching in Stage B
+- Skip already-sent contacts to prevent duplicates
+
+#### Step A3: Install dependencies and run
+
+Generate the install and run commands based on auth method:
+
+```bash
+# App Password
+pip install python-dotenv
+python send_emails.py
+
+# OAuth2
+pip install google-auth-oauthlib google-auth-httplib2 google-api-python-client python-dotenv
+python send_emails.py
+```
+
+---
+
+### Stage B: Fetch Replies + Match Threads
+
+#### When to trigger
+
+When the user says "check for replies", "who replied", or "fetch inbox" — enter this stage.
+
+#### Generate fetch script
+
+Generate a Python script based on the user's auth method. The script must include:
+
+**Thread matching (in priority order):**
+1. Message-ID match — most accurate, uses IDs stored in `sent_log.json`
+2. Sender email match
+3. Sender domain match
+
+**Filtering rules:**
+- Auto-detect and flag Out-of-Office / no-reply auto-responses
+- Skip emails sent by the user themselves
+
+**Output:** `replies.json` containing sender, reply body, matched original contact, and auto-reply flag. Contacts in `sent_log.json` with no matching reply are marked `no_reply`.
+
+---
+
+### Stage C: AI Analysis + Report
+
+Generate a script that calls the Claude API to classify each reply:
+
+| Status | Signal |
+|--------|--------|
+| ✅ Positive | Interested, wants to collaborate, asks for more info |
+| 🔄 Follow up | "Will look later", "reach out next month", etc. |
+| ❌ Rejected | Explicitly declined |
+| 📭 No reply | No response after specified number of days |
+| 🤖 Auto-reply | OOO or system-generated message |
+
+**Three outputs:**
+
+**① Summary table**
+
+```markdown
+| Contact | Site | Article Type | Status | Reply Summary | Next Action |
+|---------|------|--------------|--------|---------------|-------------|
+| John Smith | example.com | Best/Top | ✅ Positive | Interested, wants free trial | Send trial link today |
+| Jane Doe | blog.io | How-to | 📭 No reply | — | Follow up in 7 days |
+```
+
+**② Grouped status summary**
+
+```
+✅ Positive (3)   🔄 Follow up (2)   📭 No reply (15)   ❌ Rejected (1)
+```
+
+**③ Follow-up task list**
+
+```markdown
+- [ ] 🔴 [Today] Send free trial link to John Smith (example.com)
+- [ ] 🟡 [+3 days] First follow-up to Jane Doe (blog.io)
+- [ ] ⚪ [+7 days] Bulk follow-up to 15 non-responders
+```
+
+---
+
+### Stage D: Auto Follow-Up
+
+This stage closes the loop. Based on the classifications from Stage C, generate and send follow-up emails automatically — no manual copy-pasting required.
+
+#### Follow-up rules
+
+| Classification | Action | Timing |
+|----------------|--------|--------|
+| ✅ Positive | Do NOT auto follow-up — flag for manual action | Immediate |
+| 🔄 Follow up | Send a short "checking in" follow-up | +3 days after reply |
+| 📭 No reply (first) | Send follow-up #1 | +7 days after original send |
+| 📭 No reply (second) | Send follow-up #2 (final) | +7 days after follow-up #1 |
+| 📭 No reply (third+) | Mark as closed — do not contact again | — |
+| ❌ Rejected | Do not follow up — mark as closed | — |
+| 🤖 Auto-reply | Re-queue as no-reply, follow up after OOO window | +5 days |
+
+#### Generate follow-up script
+
+Based on the `analysis_results.json` from Stage C, generate a script that:
+
+- Reads each contact's current classification and `follow_up_count`
+- Skips contacts that are positive, rejected, or have reached max follow-ups (default: 2)
+- Generates a short, contextually appropriate follow-up email using the original email's subject line with `Re:` prefix to stay in the same thread
+- Sends via the same Gmail auth method used in Stage A
+- Updates `sent_log.json` with the new follow-up record and increments `follow_up_count`
+
+#### Follow-up email rules
+
+**Keep it short — 3 sentences max.** The goal is a gentle nudge, not a new pitch.
+
+- First follow-up: reference the original email briefly, restate the value in one line, single CTA
+- Second (final) follow-up: acknowledge it's the last one, keep the door open
+
+**Follow-up templates** (Claude generates these on the spot based on the original email):
+
+First follow-up:
+```
+Subject: Re: [original subject]
+
+Hi [Name], just circling back on my previous note in case it got buried.
+
+[One-line restatement of the gap/value from the original email.]
+
+Worth a quick look? — [Your Name]
+```
+
+Final follow-up:
+```
+Subject: Re: [original subject]
+
+Hi [Name], last follow-up from me — I don't want to clog your inbox.
+
+If [Your Product] ever becomes relevant for [site], feel free to reach out.
+
+Either way, keep up the great work. — [Your Name]
+```
+
+#### Contact lifecycle tracking
+
+After Stage D runs, every contact has a tracked state in `sent_log.json`:
+
+```json
+{
+  "to_email": "john@example.com",
+  "site": "example.com",
+  "status": "positive | follow_up | no_reply | rejected | closed",
+  "follow_up_count": 1,
+  "last_contact_date": "2025-01-15",
+  "final_state": false
+}
+```
+
+Loop continues (B → C → D) until `final_state: true` for every contact.
+
+---
+
+### Closed-Loop Commands
+
+| Say This | Action |
+|----------|--------|
+| "Send outreach emails" | Enter Stage A — configure Gmail and send |
+| "Check replies" | Enter Stage B — fetch and match replies |
+| "Analyze replies" | Enter Stage C — generate AI analysis report |
+| "Send follow-ups" | Enter Stage D — auto-send follow-ups based on analysis |
+| "Full loop" | Run Stage A → B → C → D in sequence |
+| "Run loop again" | Re-run Stage B → C → D on existing contacts |
+
+---
+
+## Gmail Auth Setup
+
+### Option 1: App Password (personal accounts)
+
+**Best for:** Personal Gmail accounts, quick setup, single-machine use.
+
+> ⚠️ Requires two-factor authentication (2FA) to be enabled on the account.
+
+**1. Enable 2-Step Verification**
+
+Go to [Google Account Security](https://myaccount.google.com/security) and enable 2-Step Verification.
+
+**2. Generate an App Password**
+
+1. Go to [App Passwords](https://myaccount.google.com/apppasswords)
+2. Select app → `Mail`, Select device → `Other` → enter `outreach-tool`
+3. Click Generate and copy the **16-character password**
+
+**3. Enable IMAP (required for receiving)**
+
+Gmail → Settings → See all settings → Forwarding and POP/IMAP → **Enable IMAP** → Save Changes
+
+**4. Configure .env file**
+
+```
+GMAIL_ADDRESS=your.email@gmail.com
+GMAIL_APP_PASSWORD=xxxx xxxx xxxx xxxx
+SENDER_NAME=Your Name
+SENDER_SITE=yoursite.com
+```
+
+**5. Usage in script**
+
+```python
+import smtplib, imaplib, os
+from dotenv import load_dotenv
+load_dotenv()
+
+GMAIL = os.getenv("GMAIL_ADDRESS")
+PASSWORD = os.getenv("GMAIL_APP_PASSWORD").replace(" ", "")
+
+# Send
+smtp = smtplib.SMTP_SSL('smtp.gmail.com', 465)
+smtp.login(GMAIL, PASSWORD)
+
+# Receive
+imap = imaplib.IMAP4_SSL('imap.gmail.com')
+imap.login(GMAIL, PASSWORD)
+```
+
+---
+
+### Option 2: OAuth2 (Google Workspace / team accounts)
+
+**Best for:** Google Workspace, shared team use, compliance requirements.
+
+**1. Create a Google Cloud project**
+
+1. Go to [Google Cloud Console](https://console.cloud.google.com/)
+2. Click the project dropdown → New Project → name it `email-outreach` → Create
+
+**2. Enable the Gmail API**
+
+APIs & Services → Library → search `Gmail API` → Enable
+
+**3. Configure OAuth consent screen**
+
+1. APIs & Services → OAuth consent screen
+2. User Type: External (personal) or Internal (Workspace)
+3. Add Scopes:
+   - `https://www.googleapis.com/auth/gmail.send`
+   - `https://www.googleapis.com/auth/gmail.readonly`
+4. Add your Gmail address as a test user
+
+**4. Create OAuth2 credentials**
+
+APIs & Services → Credentials → Create Credentials → OAuth client ID → Desktop app → Download JSON → rename to `credentials.json` and place in project root
+
+**5. First-time authorization (run once only)**
+
+```python
+# auth_setup.py
+from google_auth_oauthlib.flow import InstalledAppFlow
+
+SCOPES = [
+    'https://www.googleapis.com/auth/gmail.send',
+    'https://www.googleapis.com/auth/gmail.readonly'
+]
+
+flow = InstalledAppFlow.from_client_secrets_file('credentials.json', SCOPES)
+creds = flow.run_local_server(port=0)
+
+with open('token.json', 'w') as f:
+    f.write(creds.to_json())
+
+print("Authorization complete. token.json saved.")
+```
+
+A browser window will open automatically. After login, `token.json` is saved and reused for all future runs — no repeat authorization needed.
+
+**6. Usage in script**
+
+```python
+from google.oauth2.credentials import Credentials
+from google.auth.transport.requests import Request
+from googleapiclient.discovery import build
+
+def get_gmail_service():
+    creds = Credentials.from_authorized_user_file('token.json', SCOPES)
+    if creds.expired and creds.refresh_token:
+        creds.refresh(Request())
+        with open('token.json', 'w') as f:
+            f.write(creds.to_json())
+    return build('gmail', 'v1', credentials=creds)
+```
+
+> ⚠️ Both `credentials.json` and `token.json` contain sensitive credentials. Add both to `.gitignore` — never commit them to Git.
