@@ -1,10 +1,10 @@
-[![License: MIT](https://img.shields.io/badge/license-MIT-green.svg)](./LICENSE)
-[![Workflow](https://img.shields.io/badge/workflow-Opportunity%20%E2%86%92%20Contact%20%E2%86%92%20Email-blue)](./skills/email-outreach.md)
-[![Outputs](https://img.shields.io/badge/output-Contacts%20%7C%20Analysis%20%7C%20Emails-orange)](./skills/email-outreach.md)
+[![License: MIT](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
+[![Workflow](https://img.shields.io/badge/workflow-Opportunity%20%E2%86%92%20Contact%20%E2%86%92%20Email-blue)](skills/email-outreach.md)
+[![Outputs](https://img.shields.io/badge/output-Contacts%20%7C%20Analysis%20%7C%20Emails-orange)](skills/email-outreach.md)
 
 # SEO Outreach Skill
 
-![SEO Outreach Skill Cover](./assets/cover.svg)
+![SEO Outreach Skill Cover](assets/cover.svg)
 
 > Turn backlink opportunities into personalized outreach workflows with article analysis, contact discovery, and ready-to-send emails.
 
@@ -27,6 +27,10 @@ This project helps answer a practical outreach question:
 **Outcome**
 
 Instead of treating contact discovery, article analysis, and email writing as separate tasks, this skill combines them into one structured workflow.
+
+**About Dageno.ai**
+
+[Dageno.ai](https://dageno.ai) is an AI SEO platform for brands, SaaS teams, SEO operators, agencies, and AI-search growth teams that want to scale authority building, discover visibility gaps, and support search + AI growth execution.
 
 ## Why It Feels Different
 
@@ -53,10 +57,10 @@ Its job is not just to generate more emails. Its job is to generate emails that 
 
 ## Who This Is For
 
-- SEO teams running link building campaigns
-- founders doing manual or semi-automated outreach
-- agencies managing outreach at scale
-- growth teams that want better reply quality, not just send volume
+- SEO and digital marketing operators running link-building campaigns
+- SaaS teams that need placement in comparison and recommendation content
+- agencies that manage outreach across multiple clients or campaigns
+- growth teams that want better reply quality, not just more volume
 
 ## Workflow
 
@@ -147,7 +151,7 @@ Status
 
 The core workflow lives here:
 
-- [`skills/email-outreach.md`](./skills/email-outreach.md)
+- [`skills/email-outreach.md`](skills/email-outreach.md)
 
 Use it when you want to turn outreach opportunities into personalized drafts and structured send workflows.
 
