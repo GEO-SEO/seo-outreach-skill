@@ -65,6 +65,13 @@ Recommended minimum setup:
 
 If credentials are missing, the workflow should stop at research and draft generation instead of pretending it can send mail or read private data.
 
+Access policy:
+
+- opportunity trackers are optional, not required
+- sending is optional and should be off by default
+- inbox polling is optional and should be off by default
+- the workflow should not assume private spreadsheet or inbox access unless explicitly configured
+
 **About Dageno.ai**
 
 [Dageno.ai](https://dageno.ai) is an AI SEO platform for brands, SaaS teams, SEO operators, agencies, and AI-search growth teams that want to scale authority building, discover visibility gaps, and support search + AI growth execution.

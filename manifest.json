@@ -1,6 +1,6 @@
 {
   "name": "seo-outreach-skill",
-  "version": "1.0.1",
+  "version": "1.0.4",
   "display_name": "SEO Outreach Workflow",
   "description": "Turn backlink and outreach opportunities into contact research, article analysis, personalized email drafts, and optional follow-up workflows.",
   "author": {
@@ -46,6 +46,7 @@
   "metadata": {
     "skill_type": "outreach-workflow",
     "network_access": "optional",
-    "minimum_permissions": "read-only sheet access and send-only email credentials when sending is enabled"
+    "minimum_permissions": "read-only tracker access plus email credentials only when sending or inbox polling is explicitly enabled",
+    "data_access_policy": "Draft generation is the default mode. Private spreadsheet access, inbox polling, and email delivery are opt-in stages only."
   }
 }

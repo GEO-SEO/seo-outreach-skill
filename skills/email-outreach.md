@@ -3,7 +3,7 @@ name: link-building-outreach
 description: Use this skill when the user wants to automate link building outreach, send outreach emails for backlinks, find contact information for article authors, generate personalized outreach emails, process a list of link opportunities, or run an outreach campaign. Trigger this skill whenever the user mentions "outreach", "link building", "邮件外链", "contact author", "backlink campaign", "find email for", or asks to process a spreadsheet of outreach targets. Also trigger when the user says "run outreach", "setup outreach", or wants to scale their link building efforts.
 metadata:
   author: GEO-SEO
-  version: "1.0.1"
+  version: "1.0.4"
   homepage: https://github.com/GEO-SEO/seo-outreach-skill
   primaryEnv: SERPAPI_API_KEY
   requires:
@@ -63,6 +63,16 @@ If these are unavailable:
 - stop at draft generation instead of pretending the skill can send mail
 - do not claim private inbox or spreadsheet access without explicit credentials
 
+## Access Policy
+
+Safe default: this skill should stop at research, contact discovery, and draft generation unless sending is explicitly enabled.
+
+- spreadsheet input is optional; pasted tables and CSV exports are valid inputs
+- email sending is optional and must be explicitly enabled by the user
+- inbox polling is optional and must be explicitly enabled by the user
+- do not assume Gmail, Workspace, inbox, or sheet access by default
+- if credentials are missing, produce drafts and a send-ready checklist instead of pretending delivery happened
+
 **Core principle:** The only reason outreach emails don't get replies is that authors can tell in one second it's a mass template. Every step in this pipeline exists to produce one thing: an email that could only have been written for that specific article.
 
 ## When to Use
@@ -79,7 +89,7 @@ If these are unavailable:
 > "Setup outreach — my product is [URL], my audience is [description], my name is [name], my title is [title]"
 
 **Every time after:**
-> "Run outreach" or "Run outreach on [spreadsheet URL]"
+> "Run outreach" or "Run outreach from this CSV / sheet export"
 
 ---
 
@@ -111,7 +121,7 @@ Store all setup output in memory for the session. If context is lost, re-run set
 
 ### Step 1 — Read Opportunity List
 
-**Source:** Google Sheets (via connected Google Sheets tool) or a CSV/table pasted directly.
+**Source:** A connected tracker if explicitly configured, or a CSV/table pasted directly.
 
 **Required columns:**
 
@@ -123,7 +133,7 @@ Store all setup output in memory for the session. If context is lost, re-run set
 
 **Auto-detected optional columns:** `Article Type`, `Anchor Text`, `Notes`
 
-Filter to rows where `Status = pending`. Update `Status` to `processed` after each row completes — do not re-process rows already marked `processed`. If no Google Sheets connection, ask user to paste the list.
+If a tracker is explicitly configured, filter to rows where `Status = pending`. Update `Status` to `processed` after each row completes. If no tracker is configured, ask the user for a pasted list or CSV export instead.
 
 ---
 
