@@ -1,0 +1,51 @@
+{
+  "name": "seo-outreach-skill",
+  "version": "1.0.1",
+  "display_name": "SEO Outreach Workflow",
+  "description": "Turn backlink and outreach opportunities into contact research, article analysis, personalized email drafts, and optional follow-up workflows.",
+  "author": {
+    "name": "GEO-SEO",
+    "website": "https://github.com/GEO-SEO/seo-outreach-skill"
+  },
+  "tags": [
+    "seo",
+    "outreach",
+    "link-building",
+    "email",
+    "backlinks",
+    "growth"
+  ],
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/GEO-SEO/seo-outreach-skill"
+  },
+  "integrations": {
+    "opportunity_source": {
+      "optional_env_vars": [
+        "GOOGLE_SHEETS_TRACKER_URL"
+      ],
+      "recommended_access": "read-only or CSV export"
+    },
+    "search_research": {
+      "optional_env_vars": [
+        "SERPAPI_API_KEY"
+      ]
+    },
+    "gmail_sending": {
+      "optional_env_vars": [
+        "GMAIL_ADDRESS",
+        "GMAIL_APP_PASSWORD"
+      ],
+      "optional_config_files": [
+        "credentials.json",
+        "token.json"
+      ]
+    }
+  },
+  "metadata": {
+    "skill_type": "outreach-workflow",
+    "network_access": "optional",
+    "minimum_permissions": "read-only sheet access and send-only email credentials when sending is enabled"
+  }
+}

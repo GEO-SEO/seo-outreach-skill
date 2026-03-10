@@ -1,11 +1,67 @@
 ---
 name: link-building-outreach
 description: Use this skill when the user wants to automate link building outreach, send outreach emails for backlinks, find contact information for article authors, generate personalized outreach emails, process a list of link opportunities, or run an outreach campaign. Trigger this skill whenever the user mentions "outreach", "link building", "邮件外链", "contact author", "backlink campaign", "find email for", or asks to process a spreadsheet of outreach targets. Also trigger when the user says "run outreach", "setup outreach", or wants to scale their link building efforts.
+metadata:
+  author: GEO-SEO
+  version: "1.0.1"
+  homepage: https://github.com/GEO-SEO/seo-outreach-skill
+  primaryEnv: SERPAPI_API_KEY
+  requires:
+    env:
+      - SERPAPI_API_KEY
+      - GOOGLE_SHEETS_TRACKER_URL
+      - GMAIL_ADDRESS
+      - GMAIL_APP_PASSWORD
+    config:
+      - credentials.json
+      - token.json
+    bins:
+      - python3
 ---
 
 # Link Building Outreach Skill
 
 Automates the full link building outreach pipeline: reads your opportunity list, finds author contacts, deeply analyzes target articles, and generates personalized outreach emails — ready to send.
+
+## Overview
+
+Use this skill to turn outreach opportunities into a structured workflow: article analysis, contact discovery, personalized email drafting, and optional follow-up handling.
+
+## Best For
+
+- SEO teams running link-building campaigns that need better reply quality
+- SaaS teams trying to earn placements in listicles, comparisons, and resource pages
+- agencies that need repeatable outreach without mass-template language
+- operators who want contact research, relevance analysis, and draft writing in one system
+
+## Start With
+
+```text
+Setup outreach — my product is https://yourproduct.com, my audience is SEO teams, my name is Jane, my title is Founder
+```
+
+```text
+Run outreach
+```
+
+```text
+Run outreach on https://example.com/best-seo-tools
+```
+
+## External Access And Minimum Credentials
+
+This workflow can touch external services. Use the minimum credentials needed for the stage you are running:
+
+- `GOOGLE_SHEETS_TRACKER_URL`: optional source for opportunity rows; prefer read-only or exported CSV
+- `SERPAPI_API_KEY`: recommended for article discovery and search-driven contact research
+- `GMAIL_ADDRESS` and `GMAIL_APP_PASSWORD`: only needed for actual sending or inbox polling
+- `credentials.json` and `token.json`: OAuth alternative for Gmail / Workspace setups
+
+If these are unavailable:
+
+- accept pasted tables or CSV files instead of assuming sheet access
+- stop at draft generation instead of pretending the skill can send mail
+- do not claim private inbox or spreadsheet access without explicit credentials
 
 **Core principle:** The only reason outreach emails don't get replies is that authors can tell in one second it's a mass template. Every step in this pipeline exists to produce one thing: an email that could only have been written for that specific article.
 

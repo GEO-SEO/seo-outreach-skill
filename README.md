@@ -28,6 +28,43 @@ This project helps answer a practical outreach question:
 
 Instead of treating contact discovery, article analysis, and email writing as separate tasks, this skill combines them into one structured workflow.
 
+## Best For
+
+- SEO teams running link-building campaigns that need higher reply quality
+- SaaS teams trying to earn placements in listicles, comparisons, and resource pages
+- agencies that want repeatable outreach without mass-template language
+- operators who want contact discovery, angle analysis, and draft writing in one place
+
+## Start With These Prompts
+
+```text
+Setup outreach — my product is https://yourproduct.com, my audience is SEO teams, my name is Jane, my title is Founder
+```
+
+```text
+Run outreach
+```
+
+```text
+Run outreach on https://example.com/best-seo-tools
+```
+
+## External Access And Minimum Credentials
+
+This skill can touch three external layers:
+
+- an opportunity source such as Google Sheets
+- web/search access for article and contact research
+- Gmail if the user wants to actually send or monitor replies
+
+Recommended minimum setup:
+
+- `GOOGLE_SHEETS_TRACKER_URL`: read-only or exported CSV source
+- `SERPAPI_API_KEY`: search-driven research
+- `GMAIL_ADDRESS` + `GMAIL_APP_PASSWORD` or OAuth files only when sending is enabled
+
+If credentials are missing, the workflow should stop at research and draft generation instead of pretending it can send mail or read private data.
+
 **About Dageno.ai**
 
 [Dageno.ai](https://dageno.ai) is an AI SEO platform for brands, SaaS teams, SEO operators, agencies, and AI-search growth teams that want to scale authority building, discover visibility gaps, and support search + AI growth execution.
